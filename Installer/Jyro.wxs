@@ -11,7 +11,9 @@
 
     <Media Id="1" Cabinet="RealTreeJyro.cab" EmbedCab="yes" />
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+    <!-- A prerelease (1.0.0-rc.1) installs as 1.0.0, the same version as the
+         release that follows it, so a same-version install must replace it. -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer version is already installed." />
 
     <!-- Component group for all application files -->
     <ComponentGroup Id="RealTreeJyroComponents" Directory="INSTALLFOLDER">

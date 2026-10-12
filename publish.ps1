@@ -90,8 +90,10 @@ if (-not $OldVersion) {
     Write-Error "Could not read Version from $ProjectFile"
 }
 
-# Parse and bump version
-$Parts = $OldVersion.Split('.')
+# Parse and bump version. A prerelease version (1.0.0-rc.1) is published as
+# written unless a bump is asked for, which drops the suffix.
+$Core, $Suffix = $OldVersion.Split('-', 2)
+$Parts = $Core.Split('.')
 $MajorNum = [int]$Parts[0]
 $MinorNum = [int]$Parts[1]
 $PatchNum = [int]$Parts[2]
@@ -100,12 +102,13 @@ if ($Major) {
     $MajorNum++; $MinorNum = 0; $PatchNum = 0
 } elseif ($Minor) {
     $MinorNum++; $PatchNum = 0
-} else {
+} elseif ($Patch -or -not $Suffix) {
     # Default to patch
     $PatchNum++
 }
 
-$Version = "$MajorNum.$MinorNum.$PatchNum"
+$NumericVersion = "$MajorNum.$MinorNum.$PatchNum"
+$Version = if ($Suffix -and -not ($Major -or $Minor -or $Patch)) { "$NumericVersion-$Suffix" } else { $NumericVersion }
 
 # Map .NET RID to friendly platform name for output filenames
 $FriendlyRuntime = $Runtime -replace '^osx-', 'macos-'
@@ -151,7 +154,8 @@ if ($Runtime.StartsWith("win")) {
 
     # Step 4: Build MSI
     Write-Host "Building MSI..." -ForegroundColor Yellow
-    wix build -ext WixToolset.Util.wixext $WxsFile -d Version=$Version -d PublishDir=$PublishDir -o $OutputFile
+    # An MSI version is numbers only
+    wix build -ext WixToolset.Util.wixext $WxsFile -d Version=$NumericVersion -d PublishDir=$PublishDir -o $OutputFile
     if ($LASTEXITCODE -ne 0) { Write-Error "WiX build failed" }
 } else {
     # Package as tar.gz for non-Windows
