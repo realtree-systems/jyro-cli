@@ -139,10 +139,12 @@ jobs:
           dotnet tool install --global wix --version 6.0.2
           # The Util extension is vendored in .wix/extensions, which wix reads
           # relative to the working directory.
-          wix build -ext WixToolset.Util.wixext -acceptEula wix6 Installer/Jyro.wxs `
+          wix build -ext WixToolset.Util.wixext Installer/Jyro.wxs `
             -d Version=$env:NUMERIC_VERSION -d PublishDir=$env:PUBLISH_DIR `
             -o "$env:DIST_DIR/jyro-${{ matrix.name }}.msi"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # WiX writes its debug symbols beside the MSI; they are not a download.
+          Remove-Item "$env:DIST_DIR/*.wixpdb"
           Compress-Archive -Path "$env:PUBLISH_DIR/*" -DestinationPath "$env:DIST_DIR/jyro-${{ matrix.name }}.zip"
 
       - name: Package tar.gz
