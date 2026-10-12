@@ -1,0 +1,45 @@
+name: Set up Jyro CLI sources
+description: >
+  Checks out the sibling repositories the CLI builds against (the Jyro
+  language and the jyro-doc manual embedded as man pages) beside jyro-cli,
+  in the layout the project references expect, and installs the .NET SDK.
+  The calling job must already have checked jyro-cli out to ./jyro-cli.
+
+inputs:
+  token:
+    description: Token able to read the language repository while it is private.
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    # Jyro.Cli.fsproj references ../../../jyro/src/..., so the language repo
+    # is checked out to ./jyro whatever the repository is called.
+    - uses: actions/checkout@v5
+      with:
+        repository: ${{ env.JYRO_REPO }}
+        ref: ${{ env.JYRO_REF }}
+        path: jyro
+        token: ${{ inputs.token }}
+
+    # Public; the project embeds ../../../jyro-doc/manual as the man pages.
+    - uses: actions/checkout@v5
+      with:
+        repository: ${{ env.DOCS_REPO }}
+        ref: ${{ env.DOCS_REF }}
+        path: jyro-doc
+
+    # The build only warns when the manual is missing; a release must not
+    # ship a CLI with no man pages, so fail here instead.
+    - name: Check the manual is present
+      shell: bash
+      run: |
+        if [ ! -d "$GITHUB_WORKSPACE/jyro-doc/manual" ]; then
+          echo "::error::No manual/ directory in $DOCS_REPO@$DOCS_REF."
+          exit 1
+        fi
+
+    - uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}

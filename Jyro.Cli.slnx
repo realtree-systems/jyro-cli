@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Jyro.Cli/Jyro.Cli.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Jyro.Cli.Tests/Jyro.Cli.Tests.fsproj" />
+  </Folder>
+</Solution>

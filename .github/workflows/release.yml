@@ -1,0 +1,266 @@
+name: Release
+
+# Every merge to main builds, tests and publishes a GitHub release with
+# installers for Windows, Linux and macOS. Asset names carry no version, so
+#   https://github.com/<owner>/jyro-cli/releases/latest/download/<asset>
+# always serves the newest build.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "README.md"
+      - "LICENSE"
+      - ".gitignore"
+  # For releasing after a change to the language or the docs alone.
+  workflow_dispatch:
+
+# Two merges in quick succession would otherwise compute the same version.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  # The language the CLI is built against. Override JYRO_REF with a repository
+  # variable to pin a tag.
+  JYRO_REPO: realtree-systems/jyro-lang
+  JYRO_REF: ${{ vars.JYRO_REF || 'main' }}
+  # The reference manual, embedded from its manual/ directory as the man pages.
+  DOCS_REPO: realtree-systems/jyro-doc
+  DOCS_REF: main
+  PROJECT: jyro-cli/src/Jyro.Cli/Jyro.Cli.fsproj
+  DEB_MAINTAINER: "RealTree Systems <les.ritchin@realtree.cloud>"
+
+jobs:
+  version:
+    name: Determine version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: jyro-cli
+          fetch-depth: 0
+          fetch-tags: true
+
+      # <Version> in the project file is the floor: edit it to move to a new
+      # major or minor. Otherwise each release is one patch above the last
+      # tag of the same major.minor.
+      - id: version
+        name: Compute next version
+        working-directory: jyro-cli
+        run: |
+          base=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Jyro.Cli/Jyro.Cli.fsproj | head -1)
+          IFS=. read -r major minor patch <<< "$base"
+          last=$(git tag -l "v$major.$minor.*" | sed "s/^v$major\.$minor\.//" | grep -E '^[0-9]+$' | sort -n | tail -1 || true)
+          if [ -n "$last" ] && [ "$last" -ge "$patch" ]; then patch=$((last + 1)); fi
+          version="$major.$minor.$patch"
+          echo "Project version $base, last tag patch '${last:-none}' -> $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: jyro-cli
+      - uses: ./jyro-cli/.github/actions/setup-sources
+        with:
+          token: ${{ secrets.SOURCES_TOKEN || github.token }}
+      - run: dotnet test jyro-cli/Jyro.Cli.slnx -c Release
+
+  build:
+    name: Build ${{ matrix.rid }}
+    needs: [version, test]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { os: windows-latest, rid: win-x64,     name: win-x64 }
+          - { os: ubuntu-latest,  rid: linux-x64,   name: linux-x64,   deb_arch: amd64 }
+          - { os: ubuntu-latest,  rid: linux-arm64, name: linux-arm64, deb_arch: arm64 }
+          # Built on macOS so the SDK ad-hoc signs the binary, which Apple
+          # Silicon requires before it will run it.
+          - { os: macos-latest,   rid: osx-arm64,   name: macos-arm64 }
+          - { os: macos-latest,   rid: osx-x64,     name: macos-x64 }
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      PUBLISH_DIR: ${{ github.workspace }}/publish
+      DIST_DIR: ${{ github.workspace }}/dist
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: jyro-cli
+      - uses: ./jyro-cli/.github/actions/setup-sources
+        with:
+          token: ${{ secrets.SOURCES_TOKEN || github.token }}
+
+      - name: Publish
+        shell: bash
+        run: |
+          dotnet publish "$PROJECT" -c Release -r ${{ matrix.rid }} --self-contained true \
+            -p:Version=$VERSION -p:DebugType=none -o "$PUBLISH_DIR"
+          mkdir -p "$DIST_DIR"
+
+      - name: Package MSI and zip
+        if: startsWith(matrix.rid, 'win-')
+        shell: pwsh
+        working-directory: jyro-cli
+        run: |
+          dotnet tool install --global wix --version 6.0.2
+          # The Util extension is vendored in .wix/extensions, which wix reads
+          # relative to the working directory.
+          wix build -ext WixToolset.Util.wixext -acceptEula wix6 Installer/Jyro.wxs `
+            -d Version=$env:VERSION -d PublishDir=$env:PUBLISH_DIR `
+            -o "$env:DIST_DIR/jyro-${{ matrix.name }}.msi"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Compress-Archive -Path "$env:PUBLISH_DIR/*" -DestinationPath "$env:DIST_DIR/jyro-${{ matrix.name }}.zip"
+
+      - name: Package tar.gz
+        if: "!startsWith(matrix.rid, 'win-')"
+        run: |
+          chmod +x "$PUBLISH_DIR/Jyro"
+          tar -czf "$DIST_DIR/jyro-${{ matrix.name }}.tar.gz" -C "$PUBLISH_DIR" .
+
+      - name: Package deb
+        if: matrix.deb_arch
+        run: |
+          root="$RUNNER_TEMP/deb"
+          mkdir -p "$root/DEBIAN" "$root/usr/lib/jyro" "$root/usr/bin"
+          cp -a "$PUBLISH_DIR/." "$root/usr/lib/jyro/"
+          ln -s ../lib/jyro/Jyro "$root/usr/bin/jyro"
+          size=$(du -sk "$root/usr" | cut -f1)
+          cat > "$root/DEBIAN/control" <<EOF
+          Package: jyro
+          Version: $VERSION
+          Section: devel
+          Priority: optional
+          Architecture: ${{ matrix.deb_arch }}
+          Maintainer: $DEB_MAINTAINER
+          Installed-Size: $size
+          Depends: libc6, libgcc-s1 | libgcc1, libstdc++6, zlib1g, libicu76 | libicu74 | libicu72 | libicu70 | libicu67 | libicu66
+          Homepage: https://github.com/${{ github.repository }}
+          Description: Command line interpreter for the Jyro language
+           Jyro is an imperative data manipulation language designed for secure,
+           sandboxed processing of JSON-like data structures.
+          EOF
+          dpkg-deb --build --root-owner-group "$root" "$DIST_DIR/jyro-${{ matrix.name }}.deb"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: dist-${{ matrix.name }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+
+      - name: Create release
+        run: |
+          gh release create "v$VERSION" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Jyro CLI $VERSION" \
+            --generate-notes \
+            --latest
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: checksums
+          path: dist/SHA256SUMS.txt
+
+  homebrew:
+    name: Update Homebrew tap
+    needs: [version, release]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+    steps:
+      - name: Check for tap token
+        id: token
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN is not set; the Homebrew formula was not updated."
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.token.outputs.present
+        uses: actions/download-artifact@v5
+        with:
+          name: checksums
+
+      - if: steps.token.outputs.present
+        uses: actions/checkout@v5
+        with:
+          repository: realtree-systems/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      - name: Write formula
+        if: steps.token.outputs.present
+        run: |
+          sha() { awk -v f="$1" '$2 == f { print $1 }' SHA256SUMS.txt; }
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/v$VERSION"
+          cat > tap/Formula/jyro.rb <<EOF
+          class Jyro < Formula
+            desc "Command line interpreter for the Jyro language"
+            homepage "https://github.com/$GITHUB_REPOSITORY"
+            version "$VERSION"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "$base/jyro-macos-arm64.tar.gz"
+                sha256 "$(sha jyro-macos-arm64.tar.gz)"
+              else
+                url "$base/jyro-macos-x64.tar.gz"
+                sha256 "$(sha jyro-macos-x64.tar.gz)"
+              end
+            end
+
+            def install
+              bin.install "Jyro" => "jyro"
+            end
+
+            test do
+              assert_match "jyro", shell_output("#{bin}/jyro --version")
+            end
+          end
+          EOF
+          cat tap/Formula/jyro.rb
+
+      - name: Push formula
+        if: steps.token.outputs.present
+        working-directory: tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/jyro.rb
+          git commit -m "jyro $VERSION"
+          git push

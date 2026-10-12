@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <Package Name="Jyro CLI"
+           Manufacturer="RealTree"
+           Version="$(Version)"
+           UpgradeCode="1691d170-6956-4764-9ec4-0a14a5849cce"
+           InstallerVersion="500"
+           Scope="perMachine">
+
+    <Media Id="1" Cabinet="RealTreeJyro.cab" EmbedCab="yes" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+
+    <!-- Component group for all application files -->
+    <ComponentGroup Id="RealTreeJyroComponents" Directory="INSTALLFOLDER">
+      <Files Include="$(PublishDir)\*.*" />
+    </ComponentGroup>
+
+    <!-- Start Menu shortcut -->
+    <Component Id="StartMenuShortcut" Directory="ProgramMenuFolder">
+      <Shortcut Id="RealTreeJyroShortcut"
+                Name="Jyro CLI"
+                Target="[INSTALLFOLDER]Jyro.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RegistryValue Root="HKCU"
+                     Key="Software\RealTree\Jyro CLI"
+                     Name="installed"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+
+    <!-- Add install folder to system PATH -->
+    <Component Id="AddToPath" Guid="afca5863-15e2-4f95-9d16-8c32113b72a4">
+      <Environment Id="AddRealTreeJyroToPath"
+                        Name="Path"
+                        Value="[INSTALLFOLDER]"
+                        Action="set"
+                        Part="last"
+                        System="yes"
+                        Permanent="no" />
+    </Component>
+
+    <!-- Create AppData\Roaming\Jyro folder for config files -->
+    <Component Id="CreateAppDataFolder" Directory="JyroAppDataFolder" Guid="7c8f4b2a-1e3d-4a6f-9b5c-2d7e8f9a0b1c">
+      <CreateFolder />
+      <RegistryValue Root="HKCU"
+                     Key="Software\RealTree\Jyro CLI"
+                     Name="AppDataFolder"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+
+    <!-- File type associations -->
+    <Component Id="FileAssociations" Directory="INSTALLFOLDER" Guid="d3a7f1b2-8c4e-4d9a-b5f6-3e2a1c0d9e8f">
+      <!-- .jyro - Jyro Source File (run with Jyro, edit with Notepad) -->
+      <RegistryValue Root="HKLM" Key="Software\Classes\.jyro" Type="string" Value="Jyro.SourceFile" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.SourceFile" Type="string" Value="Jyro Source File" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.SourceFile\DefaultIcon" Type="string" Value="[INSTALLFOLDER]Jyro.exe,0" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.SourceFile\shell\open\command" Type="string" Value="&quot;[INSTALLFOLDER]Jyro.exe&quot; run -s &quot;%1&quot;" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.SourceFile\shell\editwithvscode" Type="string" Value="Edit with VS Code" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.SourceFile\shell\editwithvscode\command" Type="string" Value="code &quot;%1&quot;" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.SourceFile\shell\edit" Type="string" Value="Edit with Notepad" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.SourceFile\shell\edit\command" Type="string" Value="notepad.exe &quot;%1&quot;" />
+
+      <!-- .jyrx - Jyro Binary File (run with Jyro only) -->
+      <RegistryValue Root="HKLM" Key="Software\Classes\.jyrx" Type="string" Value="Jyro.BinaryFile" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.BinaryFile" Type="string" Value="Jyro Binary File" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.BinaryFile\DefaultIcon" Type="string" Value="[INSTALLFOLDER]Jyro.exe,0" />
+      <RegistryValue Root="HKLM" Key="Software\Classes\Jyro.BinaryFile\shell\open\command" Type="string" Value="&quot;[INSTALLFOLDER]Jyro.exe&quot; run -s &quot;%1&quot;" />
+
+      <RegistryValue Root="HKCU" Key="Software\RealTree\Jyro CLI" Name="FileAssoc" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <!-- Feature -->
+    <Feature Id="Main">
+      <ComponentGroupRef Id="RealTreeJyroComponents" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="AddToPath" />
+      <ComponentRef Id="CreateAppDataFolder" />
+      <ComponentRef Id="FileAssociations" />
+    </Feature>
+
+    <!-- Program Files install path -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="DIR_REALTREE" Name="RealTree">
+        <Directory Id="INSTALLFOLDER" Name="Jyro" />
+      </Directory>
+    </StandardDirectory>
+
+    <!-- AppData\Roaming\Jyro path for config files -->
+    <StandardDirectory Id="AppDataFolder">
+      <Directory Id="JyroAppDataFolder" Name="Jyro" />
+    </StandardDirectory>
+
+  </Package>
+</Wix>
