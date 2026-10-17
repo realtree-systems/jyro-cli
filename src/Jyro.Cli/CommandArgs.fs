@@ -140,7 +140,7 @@ type InitConfigArgs =
         member this.Usage =
             match this with
             | Output _ -> "Explicit output path (overrides --global; defaults to ./jyro.config.json)"
-            | Global -> "Write to the per-user config location (%AppData%/Jyro/jyro.config.json on Windows, ~/.config/Jyro/jyro.config.json elsewhere)"
+            | Global -> "Write to the per-user config location (%AppData%/Jyro/jyro.config.json on Windows, ~/Library/Application Support/Jyro/jyro.config.json on macOS, ~/.config/Jyro/jyro.config.json on Linux)"
             | Force -> "Overwrite the target file if it already exists"
 
 /// Top-level command arguments.

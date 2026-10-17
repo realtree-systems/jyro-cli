@@ -426,7 +426,7 @@ The `init-config` command writes a `jyro.config.json` template holding every set
 | Option     | Alias | Description                                                                                   |
 |------------|-------|-----------------------------------------------------------------------------------------------|
 | `--output` | `-o`  | Path to write. Defaults to `./jyro.config.json`. Overrides `--global`.                         |
-| `--global` |       | Write to the per-user location: `%APPDATA%\Jyro\jyro.config.json` on Windows, `~/.config/Jyro/jyro.config.json` elsewhere. |
+| `--global` |       | Write to the per-user location: `%APPDATA%\Jyro\jyro.config.json` on Windows, `~/Library/Application Support/Jyro/jyro.config.json` on macOS, `~/.config/Jyro/jyro.config.json` on Linux. |
 | `--force`  | `-f`  | Overwrite the file if it already exists. Without this, an existing file is left alone and the command exits with `1`. |
 
 ### Usage
@@ -491,7 +491,7 @@ The application data directory varies by platform:
 |----------|---------------------------------------------------|
 | Windows  | `%APPDATA%\Jyro\jyro.config.json`                |
 | Linux    | `$XDG_CONFIG_HOME/Jyro/jyro.config.json` (typically `~/.config/Jyro/jyro.config.json`) |
-| macOS    | `$XDG_CONFIG_HOME/Jyro/jyro.config.json` (typically `~/.config/Jyro/jyro.config.json`) |
+| macOS    | `~/Library/Application Support/Jyro/jyro.config.json` |
 
 These paths are resolved through the .NET `Environment.SpecialFolder.ApplicationData` API, which maps to the appropriate location on each operating system. `jyro init-config --global` writes to this location.
 
@@ -797,7 +797,7 @@ Homebrew provides the command `jyro`. The executable in the tar archive is named
 xattr -d com.apple.quarantine Jyro
 ```
 
-Homebrew installs are not affected. The application data directory is typically `~/.config/Jyro/`, governed by `$XDG_CONFIG_HOME`.
+Homebrew installs are not affected. The application data directory is `~/Library/Application Support/Jyro/`.
 
 ---
 
