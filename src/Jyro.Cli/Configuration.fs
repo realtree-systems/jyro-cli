@@ -139,13 +139,14 @@ let bindOptions (config: IConfiguration) =
     opts
 
 /// Creates a standalone ILoggerFactory configured with the given logging options.
+/// Console logging goes to stderr at every level, so stdout carries only a
+/// command's own output.
 let createLoggerFactory
     (logFile: string option)
     (verbosity: LogLevel)
     (quiet: bool)
     (consoleLogging: bool)
     (logFormat: string)
-    (useStdErr: bool)
     =
     let useJson =
         String.Equals(logFormat, "json", StringComparison.OrdinalIgnoreCase)
@@ -169,10 +170,9 @@ let createLoggerFactory
                         o.TimestampFormat <- "yyyy-MM-dd HH:mm:ss ")
                     |> ignore
 
-                if useStdErr then
-                    builder.Services.Configure<ConsoleLoggerOptions>(fun (o: ConsoleLoggerOptions) ->
-                        o.LogToStandardErrorThreshold <- LogLevel.Trace)
-                    |> ignore
+                builder.Services.Configure<ConsoleLoggerOptions>(fun (o: ConsoleLoggerOptions) ->
+                    o.LogToStandardErrorThreshold <- LogLevel.Trace)
+                |> ignore
 
             match logFile with
             | Some path when not (String.IsNullOrWhiteSpace path) ->
