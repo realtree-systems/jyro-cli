@@ -800,9 +800,9 @@ Homebrew installs are not affected. The application data directory is typically 
 
 ## Building from Source
 
-Building requires the .NET 10 SDK and two sibling repositories, cloned beside this one so that the paths `../jyro` and `../jyro-doc` resolve:
+Building requires the .NET 10 SDK and two sibling repositories, cloned beside this one so that the paths `../jyro-lang` and `../jyro-doc` resolve:
 
-- [`jyro`](https://github.com/realtree-systems/jyro-lang), the language, which the CLI references as projects.
+- [`jyro-lang`](https://github.com/realtree-systems/jyro-lang), the language, which the CLI references as projects.
 - [`jyro-doc`](https://github.com/realtree-systems/jyro-doc), the reference manual, whose `manual/` directory is embedded as the pages of `jyro man`. Without it the build warns and the tool has no manual pages.
 
 ```bash
