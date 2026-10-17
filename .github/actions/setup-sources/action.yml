@@ -14,13 +14,13 @@ inputs:
 runs:
   using: composite
   steps:
-    # Jyro.Cli.fsproj references ../../../jyro/src/..., so the language repo
-    # is checked out to ./jyro whatever the repository is called.
+    # Jyro.Cli.fsproj references ../../../jyro-lang/src/..., so the language repo
+    # is checked out to ./jyro-lang whatever the repository is called.
     - uses: actions/checkout@v5
       with:
         repository: ${{ env.JYRO_REPO }}
         ref: ${{ env.JYRO_REF }}
-        path: jyro
+        path: jyro-lang
         token: ${{ inputs.token }}
 
     # Public; the project embeds ../../../jyro-doc/manual as the man pages.

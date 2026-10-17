@@ -10,29 +10,29 @@ open RealTree.Jyro
 open Microsoft.Extensions.Logging
 
 /// Creates a logger factory from compile subcommand args.
-let private createLoggerFromCompileArgs (args: ParseResults<CompileArgs>) (useStdErr: bool) =
+let private createLoggerFromCompileArgs (args: ParseResults<CompileArgs>) =
     let logFile = args.TryGetResult CompileArgs.Log_File
     let verbosity = args.TryGetResult CompileArgs.Verbosity |> Option.defaultValue LogLevel.Information
     let quiet = args.Contains CompileArgs.Quiet
-    let consoleLogging = args.TryGetResult CompileArgs.Console_Logging |> Option.defaultValue true
+    let consoleLogging = args.TryGetResult CompileArgs.Console_Logging |> Option.defaultValue false
     let logFormat = args.TryGetResult CompileArgs.Log_Format |> Option.defaultValue "text"
-    Configuration.createLoggerFactory logFile verbosity quiet consoleLogging logFormat useStdErr
+    Configuration.createLoggerFactory logFile verbosity quiet consoleLogging logFormat
 
-let private createLoggerFromValidateArgs (args: ParseResults<ValidateArgs>) (useStdErr: bool) =
+let private createLoggerFromValidateArgs (args: ParseResults<ValidateArgs>) =
     let logFile = args.TryGetResult ValidateArgs.Log_File
     let verbosity = args.TryGetResult ValidateArgs.Verbosity |> Option.defaultValue LogLevel.Information
     let quiet = args.Contains ValidateArgs.Quiet
-    let consoleLogging = args.TryGetResult ValidateArgs.Console_Logging |> Option.defaultValue true
+    let consoleLogging = args.TryGetResult ValidateArgs.Console_Logging |> Option.defaultValue false
     let logFormat = args.TryGetResult ValidateArgs.Log_Format |> Option.defaultValue "text"
-    Configuration.createLoggerFactory logFile verbosity quiet consoleLogging logFormat useStdErr
+    Configuration.createLoggerFactory logFile verbosity quiet consoleLogging logFormat
 
-let private createLoggerFromTestArgs (args: ParseResults<TestArgs>) (useStdErr: bool) =
+let private createLoggerFromTestArgs (args: ParseResults<TestArgs>) =
     let logFile = args.TryGetResult TestArgs.Log_File
     let verbosity = args.TryGetResult TestArgs.Verbosity |> Option.defaultValue LogLevel.Information
     let quiet = args.Contains TestArgs.Quiet
-    let consoleLogging = args.TryGetResult TestArgs.Console_Logging |> Option.defaultValue true
+    let consoleLogging = args.TryGetResult TestArgs.Console_Logging |> Option.defaultValue false
     let logFormat = args.TryGetResult TestArgs.Log_Format |> Option.defaultValue "text"
-    Configuration.createLoggerFactory logFile verbosity quiet consoleLogging logFormat useStdErr
+    Configuration.createLoggerFactory logFile verbosity quiet consoleLogging logFormat
 
 /// Builds the default jyro.config.json template as a JSON string.
 let private buildDefaultConfigJson () =
@@ -101,7 +101,7 @@ let runInitConfig (args: ParseResults<InitConfigArgs>) =
 /// Handles the compile command.
 let runCompile (args: ParseResults<CompileArgs>) =
     task {
-        use loggerFactory = createLoggerFromCompileArgs args false
+        use loggerFactory = createLoggerFromCompileArgs args
         let logger = loggerFactory.CreateLogger("Jyro.Cli.Compile")
 
         let inputFile = args.GetResult CompileArgs.Input_Script_File
@@ -243,7 +243,6 @@ let runRun (args: ParseResults<RunArgs>) =
                 opts.NoLogging
                 opts.ConsoleLogging
                 opts.LogFormat
-                false
 
         let logger = loggerFactory.CreateLogger("Jyro.Cli.Run")
         return! ScriptExecutor.executeAsync opts logger
@@ -252,7 +251,7 @@ let runRun (args: ParseResults<RunArgs>) =
 /// Handles the validate command.
 let runValidate (args: ParseResults<ValidateArgs>) =
     task {
-        use loggerFactory = createLoggerFromValidateArgs args false
+        use loggerFactory = createLoggerFromValidateArgs args
         let logger = loggerFactory.CreateLogger("Jyro.Cli.Validate")
 
         let compiledPath = args.GetResult ValidateArgs.Compiled
@@ -308,7 +307,7 @@ let runValidate (args: ParseResults<ValidateArgs>) =
 /// Handles the test command.
 let runTest (args: ParseResults<TestArgs>) =
     task {
-        use loggerFactory = createLoggerFromTestArgs args true
+        use loggerFactory = createLoggerFromTestArgs args
         let logger = loggerFactory.CreateLogger("Jyro.Cli.Test")
 
         let inputFile = args.GetResult TestArgs.Input_Script_File

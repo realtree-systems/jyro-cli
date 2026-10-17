@@ -27,7 +27,7 @@ type CompileArgs =
             | Log_File _ -> "File for logging output (defaults to console only)"
             | Verbosity _ -> "Minimum log level (Trace, Debug, Information, Warning, Error, Critical, None)"
             | Quiet -> "Disable all logging output"
-            | Console_Logging _ -> "Enable console logging output (true/false). Default true."
+            | Console_Logging _ -> "Enable console logging output to stderr (true/false). Default false."
             | Log_Format _ -> "Log output format (text or json). Defaults to text."
 
 /// Run subcommand arguments.
@@ -63,7 +63,7 @@ type RunArgs =
             | Log_File _ -> "File for logging output (defaults to console only)"
             | Verbosity _ -> "Minimum log level (Trace, Debug, Information, Warning, Error, Critical, None)"
             | Quiet -> "Disable all logging output"
-            | Console_Logging _ -> "Enable console logging output (true/false). Default true."
+            | Console_Logging _ -> "Enable console logging output to stderr (true/false). Default false."
             | Log_Format _ -> "Log output format (text or json). Defaults to text."
             | Stdin -> "Read Jyro script source from stdin (cannot be used with -s)"
 
@@ -85,7 +85,7 @@ type ValidateArgs =
             | Log_File _ -> "File for logging output (defaults to console only)"
             | Verbosity _ -> "Minimum log level (Trace, Debug, Information, Warning, Error, Critical, None)"
             | Quiet -> "Disable all logging output"
-            | Console_Logging _ -> "Enable console logging output (true/false). Default true."
+            | Console_Logging _ -> "Enable console logging output to stderr (true/false). Default false."
             | Log_Format _ -> "Log output format (text or json). Defaults to text."
 
 /// Test subcommand arguments.
@@ -118,7 +118,7 @@ type TestArgs =
             | Log_File _ -> "File for logging output (defaults to console only)"
             | Verbosity _ -> "Minimum log level (Trace, Debug, Information, Warning, Error, Critical, None)"
             | Quiet -> "Disable all logging output"
-            | Console_Logging _ -> "Enable console logging output (true/false). Default true."
+            | Console_Logging _ -> "Enable console logging output to stderr (true/false). Default false."
             | Log_Format _ -> "Log output format (text or json). Defaults to text."
 
 /// Man subcommand arguments.
@@ -140,7 +140,7 @@ type InitConfigArgs =
         member this.Usage =
             match this with
             | Output _ -> "Explicit output path (overrides --global; defaults to ./jyro.config.json)"
-            | Global -> "Write to the per-user config location (%AppData%/Jyro/jyro.config.json on Windows, ~/.config/Jyro/jyro.config.json elsewhere)"
+            | Global -> "Write to the per-user config location (%AppData%/Jyro/jyro.config.json on Windows, ~/Library/Application Support/Jyro/jyro.config.json on macOS, ~/.config/Jyro/jyro.config.json on Linux)"
             | Force -> "Overwrite the target file if it already exists"
 
 /// Top-level command arguments.

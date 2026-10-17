@@ -113,7 +113,7 @@ The standard library and the `WriteLog` host function are always available durin
 | `--log-file`           | `-l`  | No       | Path to a file for log output. Logging is written to the console by default. |
 | `--verbosity`          | `-v`  | No       | Minimum log level. Accepted values: `Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`, `None`. Defaults to `Information`. |
 | `--quiet`              | `-q`  | No       | Disables all logging output.                                                 |
-| `--console-logging`    |       | No       | Enables or disables console logging (`true` or `false`). Defaults to `true`. |
+| `--console-logging`    |       | No       | Enables or disables console logging to stderr (`true` or `false`). Defaults to `false`. |
 | `--log-format`         |       | No       | Log output format (`text` or `json`). Defaults to `text`.                    |
 
 ### Usage
@@ -177,7 +177,7 @@ The `run` command executes a Jyro script or precompiled binary. The tool automat
 | `--log-file`           | `-l`  | No       | Path to a file for log output. Logging is written to the console by default.                 |
 | `--verbosity`          | `-v`  | No       | Minimum log level. Accepted values: `Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`, `None`. Defaults to `Information`. |
 | `--quiet`              | `-q`  | No       | Disables all logging output.                                                                 |
-| `--console-logging`    |       | No       | Enables or disables console logging (`true` or `false`). Defaults to `true`.                 |
+| `--console-logging`    |       | No       | Enables or disables console logging to stderr (`true` or `false`). Defaults to `false`.                |
 | `--config`             | `-c`  | No       | Path to a JSON configuration file. If not specified, default locations are searched (see [Configuration](#configuration)). |
 | `--stats`              |       | No       | Displays per-stage pipeline timing statistics on stderr after execution (see [Pipeline Statistics](#pipeline-statistics)). |
 | `--log-format`         |       | No       | Log output format (`text` or `json`). Defaults to `text`.                                    |
@@ -235,10 +235,11 @@ $script | jyro run --stdin -i input.json -o result.json
 
 Stdin mode only supports `.jyro` source scripts. Precompiled `.jyrx` binaries must be provided via `-s`.
 
-Logging verbosity can be adjusted or suppressed entirely:
+Logging is off on the console by default. It can be written to a file, shown on stderr, or suppressed entirely:
 
 ```bash
 jyro run -s transform.jyro -v Debug -l run.log
+jyro run -s transform.jyro --console-logging true
 jyro run -s transform.jyro -q
 ```
 
@@ -279,7 +280,7 @@ This is useful in deployment pipelines and review workflows where it must be con
 | `--log-file`        | `-l`  | No       | Path to a file for log output. Logging is written to the console by default. |
 | `--verbosity`       | `-v`  | No       | Minimum log level. Accepted values: `Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`, `None`. Defaults to `Information`. |
 | `--quiet`           | `-q`  | No       | Disables all logging output.                 |
-| `--console-logging` |       | No       | Enables or disables console logging (`true` or `false`). Defaults to `true`. |
+| `--console-logging` |       | No       | Enables or disables console logging to stderr (`true` or `false`). Defaults to `false`. |
 | `--log-format`      |       | No       | Log output format (`text` or `json`). Defaults to `text`. |
 
 ### Usage
@@ -332,7 +333,7 @@ The `test` command executes a Jyro script and compares its output against an exp
 | `--log-file`           | `-l`  | No       | Path to a file for log output. Logging is written to the console by default.                 |
 | `--verbosity`          | `-v`  | No       | Minimum log level. Accepted values: `Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`, `None`. Defaults to `Information`. |
 | `--quiet`              | `-q`  | No       | Disables all logging output.                                                                 |
-| `--console-logging`    |       | No       | Enables or disables console logging (`true` or `false`). Defaults to `true`.                 |
+| `--console-logging`    |       | No       | Enables or disables console logging to stderr (`true` or `false`). Defaults to `false`.                |
 | `--log-format`         |       | No       | Log output format (`text` or `json`). Defaults to `text`.                                    |
 
 ### Usage
@@ -425,7 +426,7 @@ The `init-config` command writes a `jyro.config.json` template holding every set
 | Option     | Alias | Description                                                                                   |
 |------------|-------|-----------------------------------------------------------------------------------------------|
 | `--output` | `-o`  | Path to write. Defaults to `./jyro.config.json`. Overrides `--global`.                         |
-| `--global` |       | Write to the per-user location: `%APPDATA%\Jyro\jyro.config.json` on Windows, `~/.config/Jyro/jyro.config.json` elsewhere. |
+| `--global` |       | Write to the per-user location: `%APPDATA%\Jyro\jyro.config.json` on Windows, `~/Library/Application Support/Jyro/jyro.config.json` on macOS, `~/.config/Jyro/jyro.config.json` on Linux. |
 | `--force`  | `-f`  | Overwrite the file if it already exists. Without this, an existing file is left alone and the command exits with `1`. |
 
 ### Usage
@@ -471,7 +472,7 @@ A configuration file has the following structure, which is what `jyro init-confi
   "logFile": "",
   "logLevel": "Information",
   "noLogging": false,
-  "consoleLogging": true,
+  "consoleLogging": false,
   "logFormat": "text",
   "stats": false,
   "pluginAssemblies": "",
@@ -490,7 +491,7 @@ The application data directory varies by platform:
 |----------|---------------------------------------------------|
 | Windows  | `%APPDATA%\Jyro\jyro.config.json`                |
 | Linux    | `$XDG_CONFIG_HOME/Jyro/jyro.config.json` (typically `~/.config/Jyro/jyro.config.json`) |
-| macOS    | `$XDG_CONFIG_HOME/Jyro/jyro.config.json` (typically `~/.config/Jyro/jyro.config.json`) |
+| macOS    | `~/Library/Application Support/Jyro/jyro.config.json` |
 
 These paths are resolved through the .NET `Environment.SpecialFolder.ApplicationData` API, which maps to the appropriate location on each operating system. `jyro init-config --global` writes to this location.
 
@@ -534,7 +535,7 @@ The `compile`, `run`, `validate`, and `test` commands write structured log messa
 |---------------------|-------|-----------------|------------------------------------------------------------------------|
 | `--verbosity`       | `-v`  | `Information`   | Sets the minimum log level. Messages below this level are discarded.   |
 | `--quiet`           | `-q`  | `false`         | Disables all logging output (console and file). Overrides other options.|
-| `--console-logging` |       | `true`          | Enables or disables the console log provider.                          |
+| `--console-logging` |       | `false`         | Enables or disables the console log provider, which writes to stderr.  |
 | `--log-file`        | `-l`  |                 | Appends log output to the specified file. The directory is created automatically if it does not exist. |
 | `--log-format`      |       | `text`          | Selects the log output format: `text` for human-readable lines, `json` for structured JSON. |
 
@@ -542,18 +543,20 @@ The accepted `--verbosity` values, from most to least verbose, are: `Trace`, `De
 
 ### Logging behavior by subcommand
 
-| Subcommand  | Console log destination | Script `WriteLog()` supported | Config file / env vars |
-|-------------|-------------------------|-------------------------------|------------------------|
-| `compile`   | stdout                  | No (scripts are not executed) | No              |
-| `run`       | stdout                  | Yes                      | Yes                    |
-| `validate`  | stdout                  | No (scripts are not executed) | No              |
-| `test`      | stderr                  | Yes                      | No                     |
+| Subcommand  | Script `WriteLog()` supported | Config file / env vars |
+|-------------|-------------------------------|------------------------|
+| `compile`   | No (scripts are not executed) | No                     |
+| `run`       | Yes                           | Yes                    |
+| `validate`  | No (scripts are not executed) | No                     |
+| `test`      | Yes                           | No                     |
 
-The `test` command writes console log output to stderr so that it does not interfere with the PASS/FAIL results on stdout. This means log messages can be redirected independently:
+Console logging is off by default, so stdout carries only a command's own output: the JSON result of `run`, the PASS/FAIL results of `test`. When it is turned on with `--console-logging true`, every subcommand writes its log to stderr, so it can be redirected independently:
 
 ```bash
-jyro test -s script.jyro -o expected.json 2>test.log
+jyro run -s transform.jyro --console-logging true 2>run.log | jq .
 ```
+
+A script's `WriteLog()` messages go through the same logging, so they appear only when console logging or a log file is enabled.
 
 The `run` command's logging options can also be set via configuration file and environment variables (see [Configuration](#configuration)). The other subcommands accept logging options from the command line only.
 
@@ -563,14 +566,14 @@ The following table shows where log output ends up based on the options provided
 
 | `--quiet` | `--console-logging` | `--log-file` | Console output | File output |
 |-----------|---------------------|--------------|----------------|-------------|
-|           |                     |              | Yes            | No          |
-|           |                     | `log.txt`    | Yes            | Yes         |
-|           | `false`             |              | No             | No          |
-|           | `false`             | `log.txt`    | No             | Yes         |
+|           |                     |              | No             | No          |
+|           |                     | `log.txt`    | No             | Yes         |
+|           | `true`              |              | Yes (stderr)   | No          |
+|           | `true`              | `log.txt`    | Yes (stderr)   | Yes         |
 | `-q`      |                     |              | No             | No          |
-| `-q`      |                     | `log.txt`    | No             | No          |
+| `-q`      | `true`              | `log.txt`    | No             | No          |
 
-When `--quiet` is set, all logging is suppressed regardless of other options. When `--console-logging false` is set, only file logging remains active (if a log file is specified).
+When `--quiet` is set, all logging is suppressed regardless of other options. Without `--console-logging true`, only file logging is active (if a log file is specified).
 
 ### Log formats
 
@@ -794,15 +797,15 @@ Homebrew provides the command `jyro`. The executable in the tar archive is named
 xattr -d com.apple.quarantine Jyro
 ```
 
-Homebrew installs are not affected. The application data directory is typically `~/.config/Jyro/`, governed by `$XDG_CONFIG_HOME`.
+Homebrew installs are not affected. The application data directory is `~/Library/Application Support/Jyro/`.
 
 ---
 
 ## Building from Source
 
-Building requires the .NET 10 SDK and two sibling repositories, cloned beside this one so that the paths `../jyro` and `../jyro-doc` resolve:
+Building requires the .NET 10 SDK and two sibling repositories, cloned beside this one so that the paths `../jyro-lang` and `../jyro-doc` resolve:
 
-- [`jyro`](https://github.com/realtree-systems/jyro-lang), the language, which the CLI references as projects.
+- [`jyro-lang`](https://github.com/realtree-systems/jyro-lang), the language, which the CLI references as projects.
 - [`jyro-doc`](https://github.com/realtree-systems/jyro-doc), the reference manual, whose `manual/` directory is embedded as the pages of `jyro man`. Without it the build warns and the tool has no manual pages.
 
 ```bash

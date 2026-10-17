@@ -12,8 +12,8 @@
     <Summary>Command line interpreter for the Jyro language.</Summary>
     <Product>Jyro</Product>
     <Description>Jyro is an imperative data manipulation language designed for secure, sandboxed processing of JSON-like data structures.</Description>
-    <PackageProjectUrl>https://github.com/realtreesystems/jyro</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/realtreesystems/jyro</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/realtree-systems/jyro-cli</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/realtree-systems/jyro-cli</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>Copyright © 2025-2026 RealTree Systems.</Copyright>
     <PackageTags>jyro;command;scripting;json;language;sandbox;commandline</PackageTags>
@@ -67,10 +67,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.3" />
-    <ProjectReference Include="..\..\..\jyro\src\Jyro.Api\Jyro.Api.fsproj" />
-    <ProjectReference Include="..\..\..\jyro\src\Jyro.Compiler\Jyro.Compiler.fsproj" />
-    <ProjectReference Include="..\..\..\jyro\src\Jyro.Core\Jyro.Core.fsproj" />
-    <ProjectReference Include="..\..\..\jyro\src\Jyro.Parser\Jyro.Parser.fsproj" />
-    <ProjectReference Include="..\..\..\jyro\src\Jyro.Stdlib\Jyro.Stdlib.fsproj" />
+    <ProjectReference Include="..\..\..\jyro-lang\src\Jyro.Api\Jyro.Api.fsproj" />
+    <ProjectReference Include="..\..\..\jyro-lang\src\Jyro.Compiler\Jyro.Compiler.fsproj" />
+    <ProjectReference Include="..\..\..\jyro-lang\src\Jyro.Core\Jyro.Core.fsproj" />
+    <ProjectReference Include="..\..\..\jyro-lang\src\Jyro.Parser\Jyro.Parser.fsproj" />
+    <ProjectReference Include="..\..\..\jyro-lang\src\Jyro.Stdlib\Jyro.Stdlib.fsproj" />
   </ItemGroup>
 </Project>
