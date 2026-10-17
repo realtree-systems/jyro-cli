@@ -24,6 +24,8 @@ let serializeJyroValue (value: obj) =
         | :? bool as b -> writer.WriteBooleanValue(b)
         | :? int64 as l -> writer.WriteNumberValue(l)
         | :? double as d -> writeDouble d
+        // An exact non-integer number, or an exact integer past int64 range
+        | :? decimal as m -> writer.WriteNumberValue(m)
         | :? string as s -> writer.WriteStringValue(s)
         | :? List<obj> as list ->
             writer.WriteStartArray()
@@ -70,6 +72,7 @@ let serializeJyroValueToStream (value: obj) (outputStream: Stream) =
         | :? bool as b -> writer.WriteBooleanValue(b)
         | :? int64 as l -> writer.WriteNumberValue(l)
         | :? double as d -> writeDouble d
+        | :? decimal as m -> writer.WriteNumberValue(m)
         | :? string as s -> writer.WriteStringValue(s)
         | :? List<obj> as list ->
             writer.WriteStartArray()

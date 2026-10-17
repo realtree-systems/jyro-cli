@@ -15,6 +15,7 @@
 		<Compile Include="CommandArgsTests.fs" />
 		<Compile Include="CompilePipelineTests.fs" />
 		<Compile Include="JsonComparerTests.fs" />
+		<Compile Include="JsonSerializerTests.fs" />
 		<Compile Include="ManIndexTests.fs" />
 		<Compile Include="Generators.fs" />
 		<Compile Include="Properties\JsonComparerLaws.fs" />
