@@ -66,28 +66,36 @@ let buildConfiguration (configPath: string option) (cliOverrides: Map<string, st
     builder.Build() :> IConfiguration
 
 /// Manually binds configuration values to JyroCommandOptions without reflection.
+/// An empty string is a setting left unset: the template `init-config` writes
+/// holds one for every path.
 let bindOptions (config: IConfiguration) =
     let mutable opts = JyroCommandOptions.Default
 
-    match config["InputScriptFile"] with
-    | null -> ()
-    | s -> opts <- { opts with InputScriptFile = Some s }
+    let path (key: string) =
+        match config[key] with
+        | null -> None
+        | s when String.IsNullOrWhiteSpace s -> None
+        | s -> Some s
 
-    match config["InputJsonFile"] with
-    | null -> ()
-    | s -> opts <- { opts with InputJsonFile = Some s }
+    match path "InputScriptFile" with
+    | None -> ()
+    | s -> opts <- { opts with InputScriptFile = s }
 
-    match config["ParametersSource"] with
-    | null -> ()
-    | s -> opts <- { opts with ParametersSource = Some s }
+    match path "InputJsonFile" with
+    | None -> ()
+    | s -> opts <- { opts with InputJsonFile = s }
 
-    match config["OutputJsonFile"] with
-    | null -> ()
-    | s -> opts <- { opts with OutputJsonFile = Some s }
+    match path "ParametersSource" with
+    | None -> ()
+    | s -> opts <- { opts with ParametersSource = s }
 
-    match config["LogFile"] with
-    | null -> ()
-    | s -> opts <- { opts with LogFile = Some s }
+    match path "OutputJsonFile" with
+    | None -> ()
+    | s -> opts <- { opts with OutputJsonFile = s }
+
+    match path "LogFile" with
+    | None -> ()
+    | s -> opts <- { opts with LogFile = s }
 
     match config["LogLevel"] with
     | null -> ()
@@ -121,20 +129,17 @@ let bindOptions (config: IConfiguration) =
         | true, v -> opts <- { opts with Stats = v }
         | _ -> ()
 
-    match config["PluginAssemblies"] with
-    | null -> ()
-    | s -> opts <- { opts with PluginAssemblies = Some s }
+    match path "PluginAssemblies" with
+    | None -> ()
+    | s -> opts <- { opts with PluginAssemblies = s }
 
-    match config["PluginDirectories"] with
-    | null -> ()
-    | s -> opts <- { opts with PluginDirectories = Some s }
+    match path "PluginDirectories" with
+    | None -> ()
+    | s -> opts <- { opts with PluginDirectories = s }
 
-    match config["PluginRecursiveDirectories"] with
-    | null -> ()
-    | s ->
-        opts <-
-            { opts with
-                PluginRecursiveDirectories = Some s }
+    match path "PluginRecursiveDirectories" with
+    | None -> ()
+    | s -> opts <- { opts with PluginRecursiveDirectories = s }
 
     opts
 

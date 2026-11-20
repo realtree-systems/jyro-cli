@@ -14,6 +14,7 @@
 		<Compile Include="LogFunctionTests.fs" />
 		<Compile Include="CommandArgsTests.fs" />
 		<Compile Include="CompilePipelineTests.fs" />
+		<Compile Include="ConfigBindingTests.fs" />
 		<Compile Include="JsonComparerTests.fs" />
 		<Compile Include="JsonSerializerTests.fs" />
 		<Compile Include="LoggingDefaultsTests.fs" />
