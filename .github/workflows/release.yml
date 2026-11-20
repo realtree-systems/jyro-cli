@@ -39,7 +39,7 @@ env:
 jobs:
   version:
     name: Determine version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.version.outputs.version }}
       numeric: ${{ steps.version.outputs.numeric }}
@@ -86,7 +86,7 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
         with:
@@ -105,8 +105,8 @@ jobs:
       matrix:
         include:
           - { os: windows-latest, rid: win-x64,     name: win-x64 }
-          - { os: ubuntu-latest,  rid: linux-x64,   name: linux-x64,   deb_arch: amd64 }
-          - { os: ubuntu-latest,  rid: linux-arm64, name: linux-arm64, deb_arch: arm64 }
+          - { os: ubuntu-24.04,   rid: linux-x64,   name: linux-x64,   deb_arch: amd64 }
+          - { os: ubuntu-24.04,   rid: linux-arm64, name: linux-arm64, deb_arch: arm64 }
           # Built on macOS so the SDK ad-hoc signs the binary, which Apple
           # Silicon requires before it will run it.
           - { os: macos-latest,   rid: osx-arm64,   name: macos-arm64 }
@@ -172,7 +172,7 @@ jobs:
           Architecture: ${{ matrix.deb_arch }}
           Maintainer: $DEB_MAINTAINER
           Installed-Size: $size
-          Depends: libc6, libgcc-s1 | libgcc1, libstdc++6, zlib1g, libicu76 | libicu74 | libicu72 | libicu70 | libicu67 | libicu66
+          Depends: libc6, libgcc-s1 | libgcc1, libstdc++6, zlib1g, libicu78 | libicu77 | libicu76 | libicu74 | libicu72 | libicu70 | libicu67 | libicu66
           Homepage: https://github.com/${{ github.repository }}
           Description: Command line interpreter for the Jyro language
            Jyro is an imperative data manipulation language designed for secure,
@@ -180,7 +180,7 @@ jobs:
           EOF
           dpkg-deb --build --root-owner-group "$root" "$DIST_DIR/jyro-${{ matrix.name }}.deb"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.name }}
           path: dist/*
@@ -189,7 +189,7 @@ jobs:
   release:
     name: Publish release
     needs: [version, build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     env:
@@ -219,7 +219,7 @@ jobs:
             --generate-notes \
             $kind
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: checksums
           path: dist/SHA256SUMS.txt
@@ -227,7 +227,7 @@ jobs:
   homebrew:
     name: Update Homebrew tap
     needs: [version, release]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       VERSION: ${{ needs.version.outputs.version }}
       # The private half of a write deploy key on homebrew-tap: it can push to
